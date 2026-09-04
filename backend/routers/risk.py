@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
 from database import get_db
 from models import Payment, RiskAssessment, Alert
 from datetime import datetime
@@ -16,12 +15,13 @@ def calculate_risk_score(
     amount: float,
     recent_payment_count: int,
     failed_payment_count: int,
+    total_customer_payments: int,
     duplicate_payment: bool = False
 ):
     score = 0
     reasons = []
 
-    # 1. Transaction amount
+    # 1. Transaction amount risk
     if amount >= 1000000:
         score += 70
         reasons.append("Extremely high transaction amount")
@@ -48,8 +48,12 @@ def calculate_risk_score(
         score += 25
         reasons.append("High payment velocity")
 
+    elif recent_payment_count >= 3:
+        score += 10
+        reasons.append("Elevated payment velocity")
 
-    # 3. Failed payment history
+
+    # 3. Failed payment behaviour
     if failed_payment_count >= 5:
         score += 30
         reasons.append("Multiple recent payment failures")
@@ -58,11 +62,38 @@ def calculate_risk_score(
         score += 15
         reasons.append("Recent payment failures")
 
+    elif failed_payment_count == 1:
+        score += 5
+        reasons.append("Previous payment failure detected")
 
-    # 4. Duplicate payment
+
+    # 4. Failure ratio
+    if total_customer_payments > 0:
+        failure_ratio = failed_payment_count / total_customer_payments
+
+        if failure_ratio >= 0.5:
+            score += 25
+            reasons.append("High customer payment failure ratio")
+
+        elif failure_ratio >= 0.3:
+            score += 15
+            reasons.append("Elevated customer payment failure ratio")
+
+
+    # 5. Duplicate transaction
     if duplicate_payment:
         score += 25
         reasons.append("Possible duplicate payment")
+
+
+    # 6. New customer behaviour
+    if total_customer_payments == 1 and amount >= 50000:
+        score += 15
+        reasons.append("High-value transaction from new customer")
+
+
+    # Cap score
+    score = min(score, 100)
 
 
     # Risk classification
@@ -77,7 +108,7 @@ def calculate_risk_score(
 
 
     return {
-        "risk_score": min(score, 100),
+        "risk_score": score,
         "risk_level": risk_level,
         "reasons": reasons
     }
@@ -120,20 +151,28 @@ def assess_payment_risk(
         }
 
 
-    # Count payments by same customer
+    # Customer payment history
+    customer_payments = db.query(Payment).filter(
+        Payment.customer_id == payment.customer_id
+    ).all()
+
+    total_customer_payments = len(customer_payments)
+
+
+    # Payment velocity
     recent_payment_count = db.query(Payment).filter(
         Payment.customer_id == payment.customer_id
     ).count()
 
 
-    # Count failed payments
+    # Failed payment history
     failed_payment_count = db.query(Payment).filter(
         Payment.customer_id == payment.customer_id,
         Payment.status == "failed"
     ).count()
 
 
-    # Check duplicate payment
+    # Duplicate payment detection
     duplicate_payment = db.query(Payment).filter(
         Payment.customer_id == payment.customer_id,
         Payment.amount == payment.amount,
@@ -146,6 +185,7 @@ def assess_payment_risk(
         amount=float(payment.amount),
         recent_payment_count=recent_payment_count,
         failed_payment_count=failed_payment_count,
+        total_customer_payments=total_customer_payments,
         duplicate_payment=duplicate_payment
     )
 
@@ -168,7 +208,7 @@ def assess_payment_risk(
     db.refresh(assessment)
 
 
-    # Create fraud alert for HIGH risk payment
+    # Create fraud alert for HIGH risk
     if result["risk_level"] == "HIGH":
 
         existing_alert = db.query(Alert).filter(

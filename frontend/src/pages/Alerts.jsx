@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { getAlerts, resolveAlert } from "../api";
+import {
+  getAlerts,
+  resolveAlert,
+  reopenAlert,
+} from "../api";
 
 function Alerts() {
   const [alerts, setAlerts] = useState([]);
@@ -8,7 +12,9 @@ function Alerts() {
   async function loadAlerts() {
     try {
       setLoading(true);
+
       const data = await getAlerts();
+
       setAlerts(data);
     } catch (error) {
       console.error("Alert loading error:", error);
@@ -22,14 +28,42 @@ function Alerts() {
     loadAlerts();
   }, []);
 
+
+  // =========================
+  // RESOLVE ALERT
+  // =========================
+
   async function handleResolve(alertId) {
     try {
       await resolveAlert(alertId);
+
       await loadAlerts();
     } catch (error) {
-      console.error("Resolve alert error:", error);
+      console.error(
+        "Resolve alert error:",
+        error
+      );
     }
   }
+
+
+  // =========================
+  // REOPEN ALERT
+  // =========================
+
+  async function handleReopen(alertId) {
+    try {
+      await reopenAlert(alertId);
+
+      await loadAlerts();
+    } catch (error) {
+      console.error(
+        "Reopen alert error:",
+        error
+      );
+    }
+  }
+
 
   const openAlerts = alerts.filter(
     (alert) => alert.status === "open"
@@ -39,12 +73,21 @@ function Alerts() {
     (alert) => alert.status === "resolved"
   ).length;
 
+
   return (
     <div>
+
+      {/* PAGE HEADER */}
+
       <div className="page-header">
+
         <div>
           <h2>Fraud Alerts</h2>
-          <p>Monitor and manage suspicious transactions</p>
+
+          <p>
+            Monitor and manage suspicious
+            transactions
+          </p>
         </div>
 
         <button
@@ -52,9 +95,13 @@ function Alerts() {
           onClick={loadAlerts}
           disabled={loading}
         >
-          {loading ? "Refreshing..." : "↻ Refresh"}
+          {loading
+            ? "Refreshing..."
+            : "↻ Refresh"}
         </button>
+
       </div>
+
 
       {/* ALERT SUMMARY */}
 
@@ -62,39 +109,65 @@ function Alerts() {
 
         <div className="card">
           <h3>Total Alerts</h3>
-          <p>{loading ? "..." : alerts.length}</p>
+
+          <p>
+            {loading
+              ? "..."
+              : alerts.length}
+          </p>
         </div>
+
 
         <div className="card">
           <h3>Open Alerts</h3>
-          <p>{loading ? "..." : openAlerts}</p>
+
+          <p>
+            {loading
+              ? "..."
+              : openAlerts}
+          </p>
         </div>
+
 
         <div className="card">
           <h3>Resolved Alerts</h3>
-          <p>{loading ? "..." : resolvedAlerts}</p>
+
+          <p>
+            {loading
+              ? "..."
+              : resolvedAlerts}
+          </p>
         </div>
 
       </div>
 
-      {/* ALERT LIST */}
+
+      {/* ALERT MANAGEMENT */}
 
       <section className="panel">
+
         <h2>Alert Management</h2>
+
 
         {loading ? (
           <p>Loading alerts...</p>
         ) : alerts.length === 0 ? (
           <p>No fraud alerts found.</p>
         ) : (
+
           <div className="risk-list">
 
             {alerts.map((alert) => (
+
               <div
                 className="risk-item"
                 key={alert.id}
               >
+
+                {/* ALERT INFORMATION */}
+
                 <div>
+
                   <strong>
                     Alert #{alert.id}
                   </strong>
@@ -110,9 +183,16 @@ function Alerts() {
                   <p>
                     Status: {alert.status}
                   </p>
+
                 </div>
 
+
+                {/* ALERT ACTIONS */}
+
                 <div>
+
+                  {/* SEVERITY */}
+
                   <span
                     className={`risk-badge ${
                       alert.severity === "high"
@@ -125,7 +205,11 @@ function Alerts() {
                     {alert.severity?.toUpperCase()}
                   </span>
 
-                  {alert.status === "open" && (
+
+                  {/* ACTION BUTTON */}
+
+                  {alert.status === "open" ? (
+
                     <button
                       className="resolve-button"
                       onClick={() =>
@@ -134,14 +218,32 @@ function Alerts() {
                     >
                       Resolve
                     </button>
+
+                  ) : (
+
+                    <button
+                      className="resolve-button"
+                      onClick={() =>
+                        handleReopen(alert.id)
+                      }
+                    >
+                      Reopen
+                    </button>
+
                   )}
+
                 </div>
+
               </div>
+
             ))}
 
           </div>
+
         )}
+
       </section>
+
     </div>
   );
 }

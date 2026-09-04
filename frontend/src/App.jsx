@@ -6,6 +6,8 @@ import Payments from "./pages/Payments";
 import RiskAnalysis from "./pages/RiskAnalysis";
 import Alerts from "./pages/Alerts";
 import Customers from "./pages/Customers";
+import TransactionDetails from "./pages/TransactionDetails";
+import Analytics from "./pages/Analytics";
 
 function App() {
   return (
@@ -13,7 +15,6 @@ function App() {
       <div className="app-layout">
 
         {/* SIDEBAR */}
-
         <aside className="sidebar">
 
           <div className="logo-section">
@@ -93,7 +94,6 @@ function App() {
         </aside>
 
         {/* MAIN CONTENT */}
-
         <main className="main-content">
 
           <header className="topbar">
@@ -117,38 +117,39 @@ function App() {
             <Routes>
 
               {/* DASHBOARD */}
-
               <Route
                 path="/"
                 element={<Dashboard />}
               />
 
               {/* PAYMENTS */}
-
               <Route
                 path="/payments"
                 element={<Payments />}
               />
 
               {/* RISK ANALYSIS */}
-
               <Route
                 path="/risk"
                 element={<RiskAnalysis />}
               />
 
               {/* FRAUD ALERTS */}
-
               <Route
                 path="/alerts"
                 element={<Alerts />}
               />
 
               {/* CUSTOMERS */}
-
               <Route
                 path="/customers"
                 element={<Customers />}
+              />
+
+              {/* TRANSACTION INVESTIGATION */}
+              <Route
+                path="/transaction/:paymentId"
+                element={<TransactionDetails />}
               />
 
             </Routes>

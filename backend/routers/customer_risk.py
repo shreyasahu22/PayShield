@@ -15,7 +15,6 @@ def get_customer_risk(
     customer_id: int,
     db: Session = Depends(get_db)
 ):
-    # Check customer
     customer = db.query(Customer).filter(
         Customer.id == customer_id
     ).first()
@@ -26,14 +25,12 @@ def get_customer_risk(
             detail="Customer not found"
         )
 
-    # Get customer's payments
     payments = db.query(Payment).filter(
         Payment.customer_id == customer_id
     ).all()
 
     payment_ids = [payment.id for payment in payments]
 
-    # Get risk assessments
     assessments = []
 
     if payment_ids:
@@ -41,22 +38,24 @@ def get_customer_risk(
             RiskAssessment.payment_id.in_(payment_ids)
         ).all()
 
-    # Calculate summary
     total_payments = len(payments)
     total_assessments = len(assessments)
 
     high_risk_count = sum(
-        1 for assessment in assessments
+        1
+        for assessment in assessments
         if assessment.risk_level == "HIGH"
     )
 
     medium_risk_count = sum(
-        1 for assessment in assessments
+        1
+        for assessment in assessments
         if assessment.risk_level == "MEDIUM"
     )
 
     low_risk_count = sum(
-        1 for assessment in assessments
+        1
+        for assessment in assessments
         if assessment.risk_level == "LOW"
     )
 
