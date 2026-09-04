@@ -88,3 +88,56 @@ High-risk transactions can automatically generate fraud alerts.
              └──────────────┼──────────────┘
                             ▼
                     Fraud Alerts
+
+
+Customer
+   ↓
+Payment Created
+   ↓
+Risk Assessment
+   ↓
+Risk Score Generated
+   ↓
+High Risk?
+   ↓
+Fraud Alert
+   ↓
+Merchant Reviews / Resolves Alert
+
+
+PayShield/
+│
+├── backend/
+│   ├── main.py
+│   ├── database.py
+│   ├── models.py
+│   ├── schemas.py
+│   ├── risk_engine.py
+│   │
+│   └── routers/
+│       ├── auth.py
+│       ├── payments.py
+│       ├── customers.py
+│       ├── customer_risk.py
+│       ├── risk.py
+│       ├── alerts.py
+│       ├── dashboard.py
+│       ├── payment_status.py
+│       └── webhooks.py
+│
+├── frontend/
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Payments.jsx
+│   │   │   ├── RiskAnalysis.jsx
+│   │   │   ├── Alerts.jsx
+│   │   │   └── Customers.jsx
+│   │   ├── api.js
+│   │   ├── App.jsx
+│   │   └── App.css
+│   │
+│   ├── package.json
+│   └── vite.config.js
+│
+└── README.md
